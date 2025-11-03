@@ -327,7 +327,7 @@ contract PropertyStaking is SepoliaConfig {
         string memory imageUrl,
         uint256 targetAmount,
         uint8 roi
-    ) public {
+    ) internal {
         require(targetAmount > 0, "Target amount must be greater than 0");
         require(roi > 0 && roi <= 100, "ROI must be between 1 and 100");
 
