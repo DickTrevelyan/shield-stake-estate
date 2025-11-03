@@ -166,7 +166,7 @@ contract PropertyStaking is SepoliaConfig {
         FHE.allowThis(userStakes[propertyId][msg.sender]);
         FHE.allow(userStakes[propertyId][msg.sender], msg.sender);
 
-        // Event emission removed temporarily
+        emit Staked(propertyId, msg.sender, msg.value);
     }
 
     /// @notice Unstakes from a property
