@@ -203,7 +203,7 @@ async function resolve(
 
   const _mockChains: Record<number, string> = isLocalHost
     ? {
-        31337: "localhost:8545",
+        31337: "http://localhost:8545",
         ...(mockChains ?? {}),
       }
     : {
