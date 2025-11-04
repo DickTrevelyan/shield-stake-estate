@@ -71,12 +71,12 @@ const config: HardhatUserConfig = {
       },
       // Align hardfork with solidity evmVersion used during compile
       hardfork: "cancun",
-      chainId: 1337,
+      chainId: 31337,
     },
     localhost: {
       url: process.env.LOCAL_RPC_URL || "http://localhost:8545",
       accounts: LOCAL_PRIVATE_KEY ? [LOCAL_PRIVATE_KEY] : undefined,
-      chainId: 1337,
+      chainId: 31337,
     },
     anvil: {
       accounts: {
@@ -84,7 +84,7 @@ const config: HardhatUserConfig = {
         path: "m/44'/60'/0'/0/",
         count: 10,
       },
-      chainId: 1337,
+      chainId: 31337,
       url: "http://localhost:8545",
     },
     sepolia: {
