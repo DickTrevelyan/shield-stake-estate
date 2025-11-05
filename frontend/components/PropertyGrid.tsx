@@ -10,15 +10,23 @@ import { useEffect, useState } from "react";
 
 export function PropertyGrid() {
   const [mounted, setMounted] = useState(false);
-  const { chain } = useAccount();
+  const [initialized, setInitialized] = useState(false);
+  const { chain, isConnected } = useAccount();
   const chainId = (chain?.id || 31337).toString() as "31337" | "11155111";
   const CONTRACT_ADDRESS = PropertyStakingAddresses[chainId]?.address || PropertyStakingAddresses["31337"].address;
   
-  const { properties, loading } = usePropertyStaking(CONTRACT_ADDRESS);
+  const { properties, loading, loadProperties } = usePropertyStaking(CONTRACT_ADDRESS);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted && isConnected && !initialized) {
+      loadProperties();
+      setInitialized(true);
+    }
+  }, [mounted, isConnected, initialized, loadProperties]);
 
   if (!mounted) {
     return (
