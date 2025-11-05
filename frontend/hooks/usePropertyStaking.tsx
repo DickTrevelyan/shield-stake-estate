@@ -111,32 +111,45 @@ export function usePropertyStaking(contractAddress: string) {
       throw new Error("Please connect your wallet");
     }
 
-    const targetAmountWei = parseEther(targetAmount);
+    try {
+      const targetAmountWei = parseEther(targetAmount);
 
-    const txHash = await writeContract({
-      address: contractAddress as `0x${string}`,
-      abi: PropertyStakingABI.abi,
-      functionName: 'createProperty',
-      args: [
-        name,
-        location,
-        imageUrl,
-        targetAmountWei,
-        roi,
-        nonce,
-        signature,
-      ],
-    });
-    
-    // Wait for transaction to be mined and reload properties
-    if (publicClient && txHash) {
-      toast.info("⏳ Waiting for transaction confirmation...");
-      await publicClient.waitForTransactionReceipt({ hash: txHash });
-      // Reload properties after successful creation
-      await loadProperties();
+      const txHash = await writeContract({
+        address: contractAddress as `0x${string}`,
+        abi: PropertyStakingABI.abi,
+        functionName: 'createProperty',
+        args: [
+          name,
+          location,
+          imageUrl,
+          targetAmountWei,
+          roi,
+          nonce,
+          signature,
+        ],
+      });
+      
+      // Wait for transaction to be mined and reload properties
+      if (publicClient && txHash) {
+        toast.info("⏳ Waiting for transaction confirmation...");
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+        
+        if (receipt.status === 'success') {
+          toast.success("✅ Property created successfully!");
+          // Reload properties after successful creation
+          await loadProperties();
+        } else {
+          toast.error("❌ Transaction failed");
+          throw new Error("Property creation transaction failed");
+        }
+      }
+      
+      return txHash;
+    } catch (error) {
+      console.error("Error creating property:", error);
+      toast.error(`❌ Failed to create property: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
-    
-    return txHash;
   };
 
   // Stake in a property with encrypted amount
