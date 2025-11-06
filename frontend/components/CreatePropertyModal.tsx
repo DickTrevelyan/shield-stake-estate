@@ -31,11 +31,70 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
   const [targetAmount, setTargetAmount] = useState("");
   const [roi, setRoi] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { signMessageAsync } = useSignMessage();
   const { createProperty } = usePropertyStaking(contractAddress);
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Name validation
+    if (!name.trim()) {
+      newErrors.name = "Property name is required";
+    } else if (name.length < 3) {
+      newErrors.name = "Property name must be at least 3 characters";
+    } else if (name.length > 100) {
+      newErrors.name = "Property name must be less than 100 characters";
+    }
+
+    // Location validation
+    if (!location.trim()) {
+      newErrors.location = "Location is required";
+    } else if (location.length < 5) {
+      newErrors.location = "Location must be at least 5 characters";
+    } else if (location.length > 200) {
+      newErrors.location = "Location must be less than 200 characters";
+    }
+
+    // Image URL validation
+    if (!imageUrl.trim()) {
+      newErrors.imageUrl = "Image URL is required";
+    } else if (!imageUrl.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i)) {
+      newErrors.imageUrl = "Please enter a valid image URL (jpg, jpeg, png, gif, or webp)";
+    }
+
+    // Target amount validation
+    if (!targetAmount.trim()) {
+      newErrors.targetAmount = "Target amount is required";
+    } else {
+      const amount = parseFloat(targetAmount);
+      if (isNaN(amount) || amount <= 0) {
+        newErrors.targetAmount = "Target amount must be greater than 0";
+      } else if (amount < 0.1) {
+        newErrors.targetAmount = "Target amount must be at least 0.1 ETH";
+      } else if (amount > 10000) {
+        newErrors.targetAmount = "Target amount must be less than 10,000 ETH";
+      }
+    }
+
+    // ROI validation
+    if (!roi.trim()) {
+      newErrors.roi = "ROI is required";
+    } else {
+      const roiValue = parseInt(roi);
+      if (isNaN(roiValue) || roiValue <= 0) {
+        newErrors.roi = "ROI must be greater than 0";
+      } else if (roiValue > 100) {
+        newErrors.roi = "ROI must be less than or equal to 100";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleCreate = async () => {
     if (!isConnected || !address) {
@@ -43,8 +102,8 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
       return;
     }
 
-    if (!name || !location || !imageUrl || !targetAmount || !roi) {
-      toast.error("Please fill in all fields");
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors");
       return;
     }
 
@@ -116,6 +175,7 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
       setImageUrl("");
       setTargetAmount("");
       setRoi("");
+      setErrors({});
       onClose();
     }
   };
@@ -149,9 +209,18 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
               type="text"
               placeholder="Luxury Manhattan Apartment"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name) {
+                  setErrors({ ...errors, name: "" });
+                }
+              }}
               disabled={isLoading}
+              className={errors.name ? "border-red-500" : ""}
             />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -161,9 +230,18 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
               type="text"
               placeholder="Downtown Manhattan, NY"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                if (errors.location) {
+                  setErrors({ ...errors, location: "" });
+                }
+              }}
               disabled={isLoading}
+              className={errors.location ? "border-red-500" : ""}
             />
+            {errors.location && (
+              <p className="text-sm text-red-500">{errors.location}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -173,9 +251,18 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
               type="url"
               placeholder="https://example.com/image.jpg"
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              onChange={(e) => {
+                setImageUrl(e.target.value);
+                if (errors.imageUrl) {
+                  setErrors({ ...errors, imageUrl: "" });
+                }
+              }}
               disabled={isLoading}
+              className={errors.imageUrl ? "border-red-500" : ""}
             />
+            {errors.imageUrl && (
+              <p className="text-sm text-red-500">{errors.imageUrl}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -185,12 +272,22 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
               type="number"
               placeholder="50"
               value={targetAmount}
-              onChange={(e) => setTargetAmount(e.target.value)}
+              onChange={(e) => {
+                setTargetAmount(e.target.value);
+                if (errors.targetAmount) {
+                  setErrors({ ...errors, targetAmount: "" });
+                }
+              }}
+              disabled={isLoading}
               min="0.01"
               step="0.01"
-              disabled={isLoading}
+              className={errors.targetAmount ? "border-red-500" : ""}
             />
+            {errors.targetAmount && (
+              <p className="text-sm text-red-500">{errors.targetAmount}</p>
+            )}
           </div>
+              </div>
 
           <div className="space-y-2">
             <Label htmlFor="roi">Expected ROI (%)</Label>
@@ -199,11 +296,20 @@ export function CreatePropertyModal({ isOpen, onClose, contractAddress }: Create
               type="number"
               placeholder="12"
               value={roi}
-              onChange={(e) => setRoi(e.target.value)}
+              onChange={(e) => {
+                setRoi(e.target.value);
+                if (errors.roi) {
+                  setErrors({ ...errors, roi: "" });
+                }
+              }}
               min="1"
               max="100"
               disabled={isLoading}
+              className={errors.roi ? "border-red-500" : ""}
             />
+            {errors.roi && (
+              <p className="text-sm text-red-500">{errors.roi}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               Expected annual return on investment (1-100%)
             </p>
