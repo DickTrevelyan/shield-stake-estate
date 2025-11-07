@@ -57,61 +57,62 @@ export function PropertyCard({ property, contractAddress }: PropertyCardProps) {
   // const progress = Number((property.currentAmount * BigInt(100)) / property.targetAmount);
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20">
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 w-full max-w-sm mx-auto">
+      <div className="relative h-48 sm:h-56 overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20">
         <div className="absolute inset-0 flex items-center justify-center">
-          <Lock className="h-16 w-16 text-primary/40" />
+          <Lock className="h-12 w-12 sm:h-16 sm:w-16 text-primary/40" />
         </div>
-        <Badge className={`absolute top-3 right-3 ${statusColors[status]}`}>
+        <Badge className={`absolute top-3 right-3 text-xs sm:text-sm ${statusColors[status]}`}>
           {status.toUpperCase()}
         </Badge>
       </div>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-xl font-bold mb-1">{property.name}</h3>
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {property.location}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg sm:text-xl font-bold mb-1 truncate">{property.name}</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="truncate">{property.location}</span>
             </p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="bg-encrypted/10 p-3 rounded-lg border border-encrypted/20">
-          <div className="flex items-center gap-2 mb-1">
-            <Lock className="h-4 w-4 text-encrypted" />
+      <CardContent className="space-y-3 pb-3">
+        <div className="bg-encrypted/10 p-2 sm:p-3 rounded-lg border border-encrypted/20">
+          <div className="flex items-center gap-1 sm:gap-2 mb-1">
+            <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-encrypted flex-shrink-0" />
             <span className="text-xs font-medium text-encrypted-foreground">Encrypted Value</span>
           </div>
-          <p className="font-mono text-sm text-encrypted font-bold">
+          <p className="font-mono text-xs sm:text-sm text-encrypted font-bold break-all">
             0x{Math.random().toString(16).substr(2, 8).toUpperCase()}...{Math.random().toString(16).substr(2, 4).toUpperCase()}
           </p>
         </div>
-        <div className="flex items-center justify-between p-3 bg-accent/10 rounded-lg border border-accent/20">
-          <span className="text-sm font-medium text-foreground">Expected ROI</span>
+        <div className="flex items-center justify-between p-2 sm:p-3 bg-accent/10 rounded-lg border border-accent/20">
+          <span className="text-xs sm:text-sm font-medium text-foreground">Expected ROI</span>
           <div className="flex items-center gap-1 text-accent font-bold">
-            <TrendingUp className="h-4 w-4" />
-            <span>{property.roi}%</span>
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">{property.roi}%</span>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button
-          className="flex-1"
-          onClick={handleInvest}
-          disabled={status === "completed"}
-        >
-          {status === "completed" ? "Fully Funded" : "Invest Now"}
-        </Button>
+      <CardFooter className="flex flex-col sm:flex-row gap-2 pt-0">
         <Button
           variant="outline"
           size="sm"
+          className="w-full sm:flex-1 text-xs sm:text-sm"
           onClick={handleViewStake}
-          className="flex items-center gap-1"
           disabled={!isConnected}
         >
-          <Eye className="h-4 w-4" />
-          View
+          <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          View Stake
+        </Button>
+        <Button
+          size="sm"
+          className="w-full sm:flex-1 text-xs sm:text-sm"
+          onClick={handleInvest}
+          disabled={!isConnected || !property.isActive}
+        >
+          Invest Now
         </Button>
       </CardFooter>
 
