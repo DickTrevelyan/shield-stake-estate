@@ -10,6 +10,16 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
 /// @notice Allows users to stake encrypted amounts in properties and view their encrypted stakes
 /// @dev Uses Zama's FHE (Fully Homomorphic Encryption) for privacy-preserving staking
 contract PropertyStaking is SepoliaConfig {
+    /// @notice Custom errors for gas optimization
+    error PropertyDoesNotExist();
+    error PropertyNotActive();
+    error InvalidAmount();
+    error InvalidROI();
+    error NonceAlreadyUsed();
+    error InvalidSignature();
+    error OnlyOwner();
+    error PropertyAlreadyClosed();
+
     /// @notice Represents a property available for investment
     struct Property {
         string name;
@@ -20,6 +30,14 @@ contract PropertyStaking is SepoliaConfig {
         uint8 roi; // Expected ROI percentage (e.g., 12 for 12%)
         bool isActive;
         address owner;
+    }
+
+    /// @notice Packed property data for gas optimization
+    struct PackedProperty {
+        uint128 targetAmount; // Sufficient for up to 340 ETH
+        uint128 currentAmount; // Sufficient for up to 340 ETH
+        uint8 roi;
+        bool isActive;
     }
 
     /// @notice Mapping from property ID to Property details
@@ -77,9 +95,9 @@ contract PropertyStaking is SepoliaConfig {
         uint256 nonce,
         bytes calldata signature
     ) external {
-        require(targetAmount > 0, "Target amount must be greater than 0");
-        require(roi > 0 && roi <= 100, "ROI must be between 1 and 100");
-        require(!usedNonces[msg.sender][nonce], "Nonce already used");
+        if (targetAmount == 0) revert InvalidAmount();
+        if (roi == 0 || roi > 100) revert InvalidROI();
+        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed();
 
         // Verify signature
         bytes32 messageHash = keccak256(
@@ -95,7 +113,7 @@ contract PropertyStaking is SepoliaConfig {
         );
         bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        require(signer == msg.sender, "Invalid signature");
+        if (signer != msg.sender) revert InvalidSignature();
 
         // Mark nonce as used
         usedNonces[msg.sender][nonce] = true;
@@ -129,10 +147,10 @@ contract PropertyStaking is SepoliaConfig {
         uint256 nonce,
         bytes calldata signature
     ) external payable {
-        require(propertyId < propertyCount, "Property does not exist");
-        require(properties[propertyId].isActive, "Property is not active");
-        require(msg.value > 0, "Must send ETH to stake");
-        require(!usedNonces[msg.sender][nonce], "Nonce already used");
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
+        if (!properties[propertyId].isActive) revert PropertyNotActive();
+        if (msg.value == 0) revert InvalidAmount();
+        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed();
 
         // Verify signature
         bytes32 messageHash = keccak256(
@@ -147,7 +165,7 @@ contract PropertyStaking is SepoliaConfig {
         );
         bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        require(signer == msg.sender, "Invalid signature");
+        if (signer != msg.sender) revert InvalidSignature();
 
         // Mark nonce as used
         usedNonces[msg.sender][nonce] = true;
@@ -178,7 +196,7 @@ contract PropertyStaking is SepoliaConfig {
         externalEuint64 encryptedAmount,
         bytes calldata inputProof
     ) external {
-        require(propertyId < propertyCount, "Property does not exist");
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
 
         // Convert external encrypted input to internal encrypted type
         euint64 amount = FHE.fromExternal(encryptedAmount, inputProof);
@@ -219,8 +237,8 @@ contract PropertyStaking is SepoliaConfig {
         uint256 nonce,
         bytes calldata signature
     ) external returns (euint64) {
-        require(propertyId < propertyCount, "Property does not exist");
-        require(!usedNonces[msg.sender][nonce], "Nonce already used");
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
+        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed();
 
         // Verify signature
         bytes32 messageHash = keccak256(
@@ -234,7 +252,7 @@ contract PropertyStaking is SepoliaConfig {
         );
         bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        require(signer == msg.sender, "Invalid signature");
+        if (signer != msg.sender) revert InvalidSignature();
 
         // Mark nonce as used
         usedNonces[msg.sender][nonce] = true;
@@ -248,19 +266,16 @@ contract PropertyStaking is SepoliaConfig {
     function getProperty(
         uint256 propertyId
     ) external view returns (Property memory) {
-        require(propertyId < propertyCount, "Property does not exist");
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
         return properties[propertyId];
     }
 
     /// @notice Closes a property (only owner can close)
     /// @param propertyId ID of the property to close
     function closeProperty(uint256 propertyId) external {
-        require(propertyId < propertyCount, "Property does not exist");
-        require(
-            properties[propertyId].owner == msg.sender,
-            "Only owner can close property"
-        );
-        require(properties[propertyId].isActive, "Property already closed");
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
+        if (properties[propertyId].owner != msg.sender) revert OnlyOwner();
+        if (!properties[propertyId].isActive) revert PropertyAlreadyClosed();
 
         properties[propertyId].isActive = false;
         emit PropertyClosed(propertyId);
