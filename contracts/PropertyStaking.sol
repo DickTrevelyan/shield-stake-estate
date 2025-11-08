@@ -19,6 +19,10 @@ contract PropertyStaking is SepoliaConfig {
     error InvalidSignature();
     error OnlyOwner();
     error PropertyAlreadyClosed();
+    error InvalidName();
+    error InvalidLocation();
+    error InvalidImageUrl();
+    error ZeroAddress();
 
     /// @notice Represents a property available for investment
     struct Property {
@@ -343,8 +347,13 @@ contract PropertyStaking is SepoliaConfig {
         uint256 targetAmount,
         uint8 roi
     ) internal {
-        require(targetAmount > 0, "Target amount must be greater than 0");
-        require(roi > 0 && roi <= 100, "ROI must be between 1 and 100");
+        if (targetAmount == 0) revert InvalidAmount();
+        if (roi == 0 || roi > 100) revert InvalidROI();
+        
+        // Additional input validation
+        if (bytes(name).length == 0) revert InvalidName();
+        if (bytes(location).length == 0) revert InvalidLocation();
+        if (bytes(imageUrl).length == 0) revert InvalidImageUrl();
 
         uint256 propertyId = propertyCount++;
 
