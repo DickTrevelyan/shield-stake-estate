@@ -81,6 +81,8 @@ export function InvestModal({ isOpen, onClose, property, contractAddress }: Inve
       // Check if FHEVM instance is ready
       if (!fhevmInstance) {
         toast.error("FHE encryption is initializing. Please wait...");
+        setIsLoading(false);
+        setEncryptStep("idle");
         return;
       }
 
@@ -147,13 +149,26 @@ export function InvestModal({ isOpen, onClose, property, contractAddress }: Inve
   const getStepText = () => {
     switch (encryptStep) {
       case "signing":
-        return "Requesting signature...";
+        return "📝 Requesting signature...";
       case "encrypting":
-        return "Encrypting amount...";
+        return "🔐 Encrypting amount...";
       case "submitting":
-        return "Submitting to blockchain...";
+        return "⛓️ Submitting to blockchain...";
       default:
         return "Invest with Encryption";
+    }
+  };
+
+  const getStepDescription = () => {
+    switch (encryptStep) {
+      case "signing":
+        return "Please check your wallet and approve the signature request";
+      case "encrypting":
+        return "Your investment amount is being encrypted for privacy";
+      case "submitting":
+        return "Transaction is being submitted to the blockchain";
+      default:
+        return "";
     }
   };
 
@@ -241,7 +256,17 @@ export function InvestModal({ isOpen, onClose, property, contractAddress }: Inve
               </div>
               {encryptStep === "signing" && (
                 <p className="text-xs text-green-600 mt-1">
-                  Please check your wallet and approve the signature request
+                  {getStepDescription()}
+                </p>
+              )}
+              {encryptStep === "encrypting" && (
+                <p className="text-xs text-green-600 mt-1">
+                  {getStepDescription()}
+                </p>
+              )}
+              {encryptStep === "submitting" && (
+                <p className="text-xs text-green-600 mt-1">
+                  {getStepDescription()}
                 </p>
               )}
             </div>
