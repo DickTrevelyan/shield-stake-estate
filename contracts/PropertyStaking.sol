@@ -24,24 +24,26 @@ contract PropertyStaking is SepoliaConfig {
     error InvalidImageUrl();
     error ZeroAddress();
 
-    /// @notice Represents a property available for investment
+    /// @notice Represents a property available for investment (optimized layout)
     struct Property {
-        string name;
-        string location;
-        string imageUrl;
-        uint256 targetAmount; // Target amount in wei (public)
-        uint256 currentAmount; // Current staked amount in wei (public)
-        uint8 roi; // Expected ROI percentage (e.g., 12 for 12%)
-        bool isActive;
-        address owner;
+        uint256 targetAmount; // 32 bytes - slot 0
+        uint256 currentAmount; // 32 bytes - slot 1
+        address owner; // 20 bytes - slot 2 (packed with isActive and roi)
+        bool isActive; // 1 byte - slot 2
+        uint8 roi; // 1 byte - slot 2
+        string name; // Reference to storage
+        string location; // Reference to storage
+        string imageUrl; // Reference to storage
     }
 
-    /// @notice Packed property data for gas optimization
+    /// @notice Packed property data for gas optimization (alternative storage)
     struct PackedProperty {
-        uint128 targetAmount; // Sufficient for up to 340 ETH
-        uint128 currentAmount; // Sufficient for up to 340 ETH
-        uint8 roi;
-        bool isActive;
+        uint128 targetAmount; // 16 bytes
+        uint128 currentAmount; // 16 bytes
+        address owner; // 20 bytes
+        uint8 roi; // 1 byte
+        bool isActive; // 1 byte
+        // Total: 54 bytes, fits in 2 storage slots efficiently
     }
 
     /// @notice Mapping from property ID to Property details
