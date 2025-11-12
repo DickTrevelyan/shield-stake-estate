@@ -10,15 +10,15 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
 /// @notice Allows users to stake encrypted amounts in properties and view their encrypted stakes
 /// @dev Uses Zama's FHE (Fully Homomorphic Encryption) for privacy-preserving staking
 contract PropertyStaking is SepoliaConfig {
-    /// @notice Custom errors for gas optimization
-    error PropertyDoesNotExist();
-    error PropertyNotActive();
-    error InvalidAmount();
-    error InvalidROI();
-    error NonceAlreadyUsed();
-    error InvalidSignature();
-    error OnlyOwner();
-    error PropertyAlreadyClosed();
+    /// @notice Custom errors for gas optimization and better debugging
+    error PropertyDoesNotExist(uint256 propertyId);
+    error PropertyNotActive(uint256 propertyId);
+    error InvalidAmount(uint256 provided);
+    error InvalidROI(uint8 provided);
+    error NonceAlreadyUsed(address user, uint256 nonce);
+    error InvalidSignature(address expected, address provided);
+    error OnlyOwner(address caller, address owner);
+    error PropertyAlreadyClosed(uint256 propertyId);
     error InvalidName();
     error InvalidLocation();
     error InvalidImageUrl();
@@ -101,9 +101,9 @@ contract PropertyStaking is SepoliaConfig {
         uint256 nonce,
         bytes calldata signature
     ) external {
-        if (targetAmount == 0) revert InvalidAmount();
-        if (roi == 0 || roi > 100) revert InvalidROI();
-        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed();
+        if (targetAmount == 0) revert InvalidAmount(targetAmount);
+        if (roi == 0 || roi > 100) revert InvalidROI(roi);
+        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed(msg.sender, nonce);
 
         // Verify signature
         bytes32 messageHash = keccak256(
@@ -119,7 +119,7 @@ contract PropertyStaking is SepoliaConfig {
         );
         bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        if (signer != msg.sender) revert InvalidSignature();
+        if (signer != msg.sender) revert InvalidSignature(msg.sender, signer);
 
         // Mark nonce as used
         usedNonces[msg.sender][nonce] = true;
@@ -153,10 +153,10 @@ contract PropertyStaking is SepoliaConfig {
         uint256 nonce,
         bytes calldata signature
     ) external payable {
-        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
-        if (!properties[propertyId].isActive) revert PropertyNotActive();
-        if (msg.value == 0) revert InvalidAmount();
-        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed();
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist(propertyId);
+        if (!properties[propertyId].isActive) revert PropertyNotActive(propertyId);
+        if (msg.value == 0) revert InvalidAmount(msg.value);
+        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed(msg.sender, nonce);
 
         // Verify signature
         bytes32 messageHash = keccak256(
@@ -171,7 +171,7 @@ contract PropertyStaking is SepoliaConfig {
         );
         bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        if (signer != msg.sender) revert InvalidSignature();
+        if (signer != msg.sender) revert InvalidSignature(msg.sender, signer);
 
         // Mark nonce as used
         usedNonces[msg.sender][nonce] = true;
@@ -202,7 +202,7 @@ contract PropertyStaking is SepoliaConfig {
         externalEuint64 encryptedAmount,
         bytes calldata inputProof
     ) external {
-        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist(propertyId);
 
         // Convert external encrypted input to internal encrypted type
         euint64 amount = FHE.fromExternal(encryptedAmount, inputProof);
@@ -243,8 +243,8 @@ contract PropertyStaking is SepoliaConfig {
         uint256 nonce,
         bytes calldata signature
     ) external returns (euint64) {
-        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
-        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed();
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist(propertyId);
+        if (usedNonces[msg.sender][nonce]) revert NonceAlreadyUsed(msg.sender, nonce);
 
         // Verify signature
         bytes32 messageHash = keccak256(
@@ -258,7 +258,7 @@ contract PropertyStaking is SepoliaConfig {
         );
         bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        if (signer != msg.sender) revert InvalidSignature();
+        if (signer != msg.sender) revert InvalidSignature(msg.sender, signer);
 
         // Mark nonce as used
         usedNonces[msg.sender][nonce] = true;
@@ -272,16 +272,16 @@ contract PropertyStaking is SepoliaConfig {
     function getProperty(
         uint256 propertyId
     ) external view returns (Property memory) {
-        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist(propertyId);
         return properties[propertyId];
     }
 
     /// @notice Closes a property (only owner can close)
     /// @param propertyId ID of the property to close
     function closeProperty(uint256 propertyId) external {
-        if (propertyId >= propertyCount) revert PropertyDoesNotExist();
-        if (properties[propertyId].owner != msg.sender) revert OnlyOwner();
-        if (!properties[propertyId].isActive) revert PropertyAlreadyClosed();
+        if (propertyId >= propertyCount) revert PropertyDoesNotExist(propertyId);
+        if (properties[propertyId].owner != msg.sender) revert OnlyOwner(msg.sender, properties[propertyId].owner);
+        if (!properties[propertyId].isActive) revert PropertyAlreadyClosed(propertyId);
 
         properties[propertyId].isActive = false;
         emit PropertyClosed(propertyId);
