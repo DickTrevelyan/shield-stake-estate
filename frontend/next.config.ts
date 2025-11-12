@@ -2,7 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  webpack: (config, { isServer }) => {
+  compress: true,
+  poweredByHeader: false,
+  swcMinify: true,
+  webpack: (config, { isServer, dev }) => {
     if (isServer) {
       config.externals.push({
         'indexeddb-js': 'indexeddb-js',
@@ -24,6 +27,29 @@ const nextConfig: NextConfig = {
       '@react-native-async-storage/async-storage': false,
     };
     
+    // Bundle optimization for production
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+            },
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              enforce: true,
+            },
+          },
+        },
+      };
+    }
+    
     // Ignore warnings for certain modules
     config.ignoreWarnings = [
       { module: /node_modules\/node-fetch\/lib\/index\.js/ },
@@ -34,6 +60,13 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     esmExternals: true,
+    optimizeCss: true,
+    scrollRestoration: true,
+  },
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 };
 
