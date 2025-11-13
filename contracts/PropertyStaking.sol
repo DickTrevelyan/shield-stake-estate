@@ -287,23 +287,29 @@ contract PropertyStaking is SepoliaConfig {
         emit PropertyClosed(propertyId);
     }
 
-    /// @notice Gets all active properties
+    /// @notice Gets all active properties (optimized version)
     /// @return Array of property IDs that are active
     function getActiveProperties() external view returns (uint256[] memory) {
         uint256 activeCount = 0;
+        uint256 totalProperties = propertyCount;
 
-        // Count active properties
-        for (uint256 i = 0; i < propertyCount; i++) {
+        // First pass: count active properties
+        for (uint256 i = 0; i < totalProperties; i++) {
             if (properties[i].isActive) {
                 activeCount++;
             }
         }
 
-        // Create array of active property IDs
+        // Early return if no active properties
+        if (activeCount == 0) {
+            return new uint256[](0);
+        }
+
+        // Second pass: fill array with active property IDs
         uint256[] memory activePropertyIds = new uint256[](activeCount);
         uint256 index = 0;
 
-        for (uint256 i = 0; i < propertyCount; i++) {
+        for (uint256 i = 0; i < totalProperties; i++) {
             if (properties[i].isActive) {
                 activePropertyIds[index] = i;
                 index++;
@@ -311,6 +317,29 @@ contract PropertyStaking is SepoliaConfig {
         }
 
         return activePropertyIds;
+    }
+
+    /// @notice Batch check if multiple properties are active (gas optimization)
+    /// @param propertyIds Array of property IDs to check
+    /// @return Array of booleans indicating if each property is active
+    function batchCheckActive(uint256[] calldata propertyIds) external view returns (bool[] memory) {
+        bool[] memory isActiveArray = new bool[](propertyIds.length);
+        
+        for (uint256 i = 0; i < propertyIds.length; i++) {
+            if (propertyIds[i] < propertyCount) {
+                isActiveArray[i] = properties[propertyIds[i]].isActive;
+            } else {
+                isActiveArray[i] = false;
+            }
+        }
+        
+        return isActiveArray;
+    }
+
+    /// @notice Get property count (view function optimization)
+    /// @return Total number of properties
+    function getPropertyCount() external view returns (uint256) {
+        return propertyCount;
     }
 
     /// @notice Initialize contract with sample properties
