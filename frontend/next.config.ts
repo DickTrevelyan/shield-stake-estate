@@ -1,11 +1,12 @@
 import type { NextConfig } from "next";
+import type { Configuration } from "webpack";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
   swcMinify: true,
-  webpack: (config, { isServer, dev }) => {
+  webpack: (config: Configuration, { isServer, dev }: { isServer: boolean; dev: boolean }) => {
     if (isServer) {
       config.externals.push({
         'indexeddb-js': 'indexeddb-js',
