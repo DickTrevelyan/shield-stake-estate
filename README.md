@@ -7,7 +7,7 @@ A decentralized property investment platform where users can stake in real estat
 ## 🎬 Demo
 
 ### Live Demo
-🌐 **[https://shield-stake-estate.vercel.app/](https://shield-stake-estate.vercel.app/)**
+🌐 **[https://shield-stake-estate-xem.vercel.app/](https://shield-stake-estate-xem.vercel.app/)**
 
 ### Video Demo
 📹 Watch the demo video: [demo.mp4](./demo.mp4)
@@ -326,7 +326,7 @@ git push origin main
 
 3. **Deploy**
 - Click "Deploy"
-- Your app will be live at `https://your-app.vercel.app`
+- Your app will be live at `https://shield-stake-estate-xem.vercel.app/
 
 ### Deploy Contracts to Sepolia
 
@@ -362,14 +362,14 @@ This project is licensed under the BSD-3-Clause-Clear License - see the [LICENSE
 
 ## 📞 Support
 
-- **Live Demo**: [https://shield-stake-estate.vercel.app/](https://shield-stake-estate.vercel.app/)
+- **Live Demo**: [https://shield-stake-estate-xem.vercel.app/](https://shield-stake-estate-xem.vercel.app/)
 - **GitHub Issues**: [Report bugs or request features](https://github.com/DickTrevelyan/shield-stake-estate/issues)
 - **Zama Documentation**: [FHEVM Docs](https://docs.zama.ai)
 - **Zama Discord**: [Join the community](https://discord.gg/zama)
 
 ## 🔗 Links
 
-- **Live Application**: https://shield-stake-estate.vercel.app/
+- **Live Application**: https://shield-stake-estate-xem.vercel.app/
 - **GitHub Repository**: https://github.com/DickTrevelyan/shield-stake-estate
 - **Zama FHEVM**: https://docs.zama.ai/fhevm
 - **RainbowKit**: https://www.rainbowkit.com/
